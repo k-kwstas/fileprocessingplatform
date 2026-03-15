@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: FileProcessingPlatform
+  datasource:
+      url: jdbc:postgresql://localhost:5176/file_process
+      username: postgres
+      password: password
+      driver-class-name: org.postgresql.Driver
