@@ -2,7 +2,35 @@ spring:
   application:
     name: FileProcessingPlatform
   datasource:
-      url: jdbc:postgresql://localhost:5176/file_process
-      username: postgres
-      password: password
+      url: ${SQL_DATABASE_URL}
+      username: ${SQL_DATABASE_USERNAME}
+      password: ${SQL_DATABASE_PASSWORD}
       driver-class-name: org.postgresql.Driver
+      Hikari:
+        initialization-fail-timeout: -1
+        maximum-pool-size: 10
+        minimum-idle: 2
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+        validation-timeout: 5000
+        keepalive-time: 300000
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: 86400000
+    issuer: file-processing-platform
+  file-processing:
+    max-file-size-mb: 25
+    allowed-extensions:
+      - csv
+      - json
+      - xml
