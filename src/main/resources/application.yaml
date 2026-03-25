@@ -25,7 +25,7 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 app:
   folders:
-    base: C:/Users/kwsta/Desktop/projects/FileProcessingPlatform
+    base: ${BASE_PATH}
     input: ${app.folders.base}/data/input
     output: ${app.folders.base}/data/output
     archive: ${app.folders.base}/data/input/archive
@@ -48,7 +48,7 @@ ibm:
     channel: DEV.APP.SVRCONN
     connName: localhost(1414)
     user: app
-    password: passw0rd
+    password: ${MQ_APP_PASSWORD}
     applicationName: ${spring.application.name}
 thread:
   virtualThreads:

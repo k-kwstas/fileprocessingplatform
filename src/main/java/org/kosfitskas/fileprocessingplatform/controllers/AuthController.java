@@ -1,5 +1,6 @@
 package org.kosfitskas.fileprocessingplatform.controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import lombok.RequiredArgsConstructor;
 import org.kosfitskas.fileprocessingplatform.models.dtos.LoginRequest;
 import org.kosfitskas.fileprocessingplatform.models.dtos.LoginResponse;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth/api")
+@SecurityRequirements
 public class AuthController {
 
     private final AuthService service;

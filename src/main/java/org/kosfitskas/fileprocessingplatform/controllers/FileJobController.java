@@ -1,5 +1,6 @@
 package org.kosfitskas.fileprocessingplatform.controllers;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.kosfitskas.fileprocessingplatform.handler.MqService;
 import org.kosfitskas.fileprocessingplatform.models.FileJobEntity;
@@ -15,6 +16,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/jobs")
+@SecurityRequirement(name = "bearerAuth")
 public class FileJobController {
 
     private final FileJobService fileJobService;
