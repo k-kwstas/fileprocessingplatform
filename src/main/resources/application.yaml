@@ -24,6 +24,11 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
 app:
+  folders:
+    base: C:/Users/kwsta/Desktop/projects/FileProcessingPlatform
+    input: ${app.folders.base}/data/input
+    output: ${app.folders.base}/data/output
+    archive: ${app.folders.base}/data/input/archive
   jwt:
     secret: ${JWT_SECRET}
     expiration-ms: 86400000
@@ -34,3 +39,17 @@ app:
       - csv
       - json
       - xml
+  mq:
+    queue-in: DEV.QUEUE.1
+    queue-out: DEV.QUEUE.2
+ibm:
+  mq:
+    queueManager: QM1
+    channel: DEV.APP.SVRCONN
+    connName: localhost(1414)
+    user: app
+    password: passw0rd
+    applicationName: ${spring.application.name}
+thread:
+  virtualThreads:
+    enabled: true

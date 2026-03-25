@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  ibm-mq:
+    image: icr.io/ibm-messaging/mq:latest
+    container_name: ibm-mq
+    environment:
+      LICENSE: accept
+      MQ_QMGR_NAME: QM1
+      MQ_ADMIN_PASSWORD: adminpass
+      MQ_APP_PASSWORD: passw0rd
+    ports:
+      - "1414:1414"
+      - "9443:9443"
+    volumes:
+      - mq-data:/mnt/mqm
+      - ./config.mqsc:/etc/mqm/config.mqsc
+
+volumes:
+  mq-data:

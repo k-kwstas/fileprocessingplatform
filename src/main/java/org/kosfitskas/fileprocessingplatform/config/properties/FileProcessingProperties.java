@@ -13,11 +13,8 @@ import java.util.List;
 @Validated
 @RequiredArgsConstructor
 @Data
-public class FileProcessing {
+public class FileProcessingProperties {
     @Min(1)
     private int maxFileSizeMb;
-
     private List<String> allowedExtensions = new ArrayList<>();
-
-
 }
