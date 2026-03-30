@@ -42,6 +42,7 @@ app:
   mq:
     queue-in: DEV.QUEUE.1
     queue-out: DEV.QUEUE.2
+
 ibm:
   mq:
     queueManager: QM1
@@ -50,6 +51,9 @@ ibm:
     user: app
     password: ${MQ_APP_PASSWORD}
     applicationName: ${spring.application.name}
+    sslCipherSpec: ANY_TLS12_OR_HIGHER
+    sslTrustStore: classpath:truststore.jks
+    sslTrustStorePassword: changeit
 thread:
   virtualThreads:
     enabled: true
