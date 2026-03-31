@@ -1,17 +1,15 @@
 package org.kos.fileprocessingplatform.handler;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.camel.Exchange;
+import org.apache.camel.builder.RouteBuilder;
 import org.kos.fileprocessingplatform.config.properties.Folders;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jms.annotation.JmsListener;
-import org.springframework.jms.core.JmsTemplate;
-import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -22,38 +20,41 @@ import java.nio.file.StandardCopyOption;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MqHandler {
-    private final Folders properties;
-    private final JmsTemplate jmsTemplate;
-    @Value("${app.mq.queue-out}")
-    private String queueOut;
+public class MqHandler extends RouteBuilder {
     private static final String FILE_NAME = "fileName";
+    private static final String ORIGINAL_FILE_NAME = "originalFileName";
     private static final String JSON = ".json";
-    private final XmlMapper xmlMapper = new XmlMapper();
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @JmsListener(destination = "${app.mq.queue-in}")
-    public void receiveFile(Message<String> message) {
-        String xmlContent = message.getPayload();
-        Object fileNameHeader = message.getHeaders().get(FILE_NAME);
-        String fileName = fileNameHeader != null ? fileNameHeader.toString() : "unknown.xml";
+    private final Folders properties;
+    private final XmlMapper xmlMapper;
+    private final ObjectMapper objectMapper;
+
+    @Override
+    public void configure() {
+        from("jms:queue:{{app.mq.queue-in}}")
+                .routeId("mq-xml-to-json")
+                .process(this::transformXmlToJson)
+                .to("jms:queue:{{app.mq.queue-out}}");
+
+        from("jms:queue:{{app.mq.queue-out}}")
+                .routeId("mq-json-to-output")
+                .process(this::writeJsonOutput);
+    }
+
+    private void transformXmlToJson(Exchange exchange) {
+        String xmlContent = exchange.getIn().getBody(String.class);
+        String fileName = exchange.getIn().getHeader(FILE_NAME, "unknown.xml", String.class);
 
         try {
             log.info("Received XML file: {}", fileName);
-
             String jsonContent = convertXmlToJson(xmlContent);
-
             String jsonFileName = toJsonFileName(fileName);
 
-            jmsTemplate.convertAndSend(queueOut, jsonContent, jmsMessage -> {
-                jmsMessage.setStringProperty(FILE_NAME, jsonFileName);
-                jmsMessage.setStringProperty("originalFileName", fileName);
-                jmsMessage.setStringProperty("contentType", "application/json");
-                return jmsMessage;
-            });
-
-            log.info("Converted {} to JSON and sent to {}", fileName, queueOut);
-
+            exchange.getMessage().setBody(jsonContent);
+            exchange.getMessage().setHeader(FILE_NAME, jsonFileName);
+            exchange.getMessage().setHeader(ORIGINAL_FILE_NAME, fileName);
+            exchange.getMessage().setHeader("contentType", "application/json");
+            log.info("Converted {} to JSON and sent to the output queue", fileName);
         } catch (Exception e) {
             log.error("Failed to convert file {} from XML to JSON", fileName, e);
             throw new IllegalArgumentException("Invalid XML content", e);
@@ -66,14 +67,10 @@ public class MqHandler {
     }
 
 
-    @JmsListener(destination = "${app.mq.queue-out}")
-    public void receiveFileWithHeaders(Message<String> message) {
-        String jsonContent = message.getPayload();
-        Object fileNameHeader = message.getHeaders().get(FILE_NAME);
-        Object originalFileNameHeader = message.getHeaders().get("originalFileName");
-
-        String fileName = fileNameHeader != null ? fileNameHeader.toString() : "output.json";
-        String originalFileName = originalFileNameHeader != null ? originalFileNameHeader.toString() : null;
+    private void writeJsonOutput(Exchange exchange) {
+        String jsonContent = exchange.getIn().getBody(String.class);
+        String fileName = exchange.getIn().getHeader(FILE_NAME, "output.json", String.class);
+        String originalFileName = exchange.getIn().getHeader(ORIGINAL_FILE_NAME, String.class);
 
         try {
             writeJsonToOutputFolder(fileName, jsonContent);
